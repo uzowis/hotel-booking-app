@@ -17,7 +17,7 @@ async function verifyToken(
 ) {
   // grab the token from req.cookie.
   const token = req.cookies["auth_token"];
-  console.log("Token: ",token);
+
 
   try {
     // use jwt.verify to verify the token
