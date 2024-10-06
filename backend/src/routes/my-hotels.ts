@@ -69,7 +69,8 @@ hotelRoute.post(
       const newHotel: HotelType = req.body;
 
       const imageUrls = await uploadImages(imageFiles);
-      (newHotel.imageUrls = imageUrls), (newHotel.userId = req.userId);
+      newHotel.imageUrls = imageUrls;
+      newHotel.userId = req.userId;
       newHotel.lastUpdated = new Date();
 
       const hotel = new Hotel(newHotel);

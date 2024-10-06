@@ -43,6 +43,7 @@ hotelRoute.post("/", auth_1.default, [
         .withMessage("Description is required"),
     (0, express_validator_1.body)("pricePerNight")
         .isNumeric()
+        .notEmpty()
         .withMessage("Price Per Night is required and must be a number"),
     (0, express_validator_1.body)("starRating")
         .isNumeric()
@@ -71,7 +72,8 @@ hotelRoute.post("/", auth_1.default, [
         const imageFiles = req.files;
         const newHotel = req.body;
         const imageUrls = yield uploadImages(imageFiles);
-        (newHotel.imageUrls = imageUrls), (newHotel.userId = req.userId);
+        newHotel.imageUrls = imageUrls;
+        newHotel.userId = req.userId;
         newHotel.lastUpdated = new Date();
         const hotel = new hotels_1.default(newHotel);
         yield hotel.save();
@@ -99,5 +101,4 @@ function uploadImages(imageFiles) {
         return imageUrls;
     });
 }
-;
 exports.default = hotelRoute;

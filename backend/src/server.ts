@@ -40,7 +40,7 @@ const PORT = process.env.PORT || 8002;
 // Connecting routers to the express server
 app.use("/api/users", usersRoute);
 app.use("/api/auth", authRoute);
-app.use("/api/my-hotels", hotelRoute);
+app.use("/api/my-hotels", hotelRoute)
 
 app.use(express.static(path.join(__dirname, "../../frontend/dist")));
 
