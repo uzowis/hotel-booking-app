@@ -1,12 +1,12 @@
 import { check, validationResult } from "express-validator";
-import User from "../models/users/mongo";
+import User from "../models/users";
 import express, { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import verifyToken from "../middleware/auth";
 
-const usersRouter = express.Router();
+const usersRoute = express.Router();
 
-usersRouter.get(
+usersRoute.get(
   "/me",
   verifyToken,
   async (req: Request, res: Response) => {
@@ -26,7 +26,7 @@ usersRouter.get(
 );
 
 // Get all registered Users
-usersRouter.get("/", async (req: Request, res: Response) => {
+usersRoute.get("/", async (req: Request, res: Response) => {
   try {
     const user = await User.find({}, "-password");
     res.status(200).json(user);
@@ -39,7 +39,7 @@ usersRouter.get("/", async (req: Request, res: Response) => {
 });
 
 // Register new User
-usersRouter.post(
+usersRoute.post(
   "/register",
   [
     // Validate User input
@@ -94,4 +94,4 @@ usersRouter.post(
   }
 );
 
-export default usersRouter;
+export default usersRoute;

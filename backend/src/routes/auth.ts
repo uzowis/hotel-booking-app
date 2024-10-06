@@ -2,13 +2,13 @@ import express, { Request, Response } from "express";
 import { check, validationResult } from "express-validator";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import User from "../models/users/mongo";
+import User from "../models/users";
 import verifyToken from "../middleware/auth";
 
-const authRouter = express.Router();
+const authRoute = express.Router();
 
 // Login User
-authRouter.post(
+authRoute.post(
   "/login",
   [
     check("email", "Enter valid email address").isString(),
@@ -63,20 +63,20 @@ authRouter.post(
 );
 
 // Validate Token
-authRouter.get("/validate-token", verifyToken, (req: Request,  res: Response)=>{
+authRoute.get("/validate-token", verifyToken, (req: Request,  res: Response)=>{
   res.status(200).send({userId: req.userId});
 })
 
 
 // Logout User
-authRouter.post("/logout", (req: Request, res: Response) =>{
+authRoute.post("/logout", (req: Request, res: Response) =>{
   res.cookie("auth_token", "", {
     expires : new Date(0)
   });
   res.send().status(200);
 })
 
-export default authRouter;
+export default authRoute;
 
 // The user registers
 // user details saved in DB

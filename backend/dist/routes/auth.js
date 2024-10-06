@@ -16,11 +16,11 @@ const express_1 = __importDefault(require("express"));
 const express_validator_1 = require("express-validator");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const mongo_1 = __importDefault(require("../models/users/mongo"));
+const users_1 = __importDefault(require("../models/users"));
 const auth_1 = __importDefault(require("../middleware/auth"));
-const authRouter = express_1.default.Router();
+const authRoute = express_1.default.Router();
 // Login User
-authRouter.post("/login", [
+authRoute.post("/login", [
     (0, express_validator_1.check)("email", "Enter valid email address").isString(),
     (0, express_validator_1.check)("password")
         .isLength({ min: 6 })
@@ -34,7 +34,7 @@ authRouter.post("/login", [
     }
     // Check if the user exists using email
     try {
-        const user = yield mongo_1.default.findOne({ email: req.body.email });
+        const user = yield users_1.default.findOne({ email: req.body.email });
         if (!user) {
             return res.status(400).json({ message: "Invalid login details" });
         }
@@ -59,17 +59,17 @@ authRouter.post("/login", [
     }
 }));
 // Validate Token
-authRouter.get("/validate-token", auth_1.default, (req, res) => {
+authRoute.get("/validate-token", auth_1.default, (req, res) => {
     res.status(200).send({ userId: req.userId });
 });
 // Logout User
-authRouter.post("/logout", (req, res) => {
+authRoute.post("/logout", (req, res) => {
     res.cookie("auth_token", "", {
         expires: new Date(0)
     });
     res.send().status(200);
 });
-exports.default = authRouter;
+exports.default = authRoute;
 // The user registers
 // user details saved in DB
 // path = ./routes/auth.ts

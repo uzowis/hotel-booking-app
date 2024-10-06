@@ -1,13 +1,23 @@
 import express, { Request, Response } from "express";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
-import authRouter from "./routes/auth";
-import usersRouter from "./routes/users";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import path from "path";
+import authRoute from "./routes/auth";
+import usersRoute from "./routes/users";
+import { v2 as cloudinary } from "cloudinary";
+import hotelRoute from "./routes/my-hotels";
 
+// DotEnv Configuration
 dotenv.config();
+
+// Cloudinary configuration
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUD_API_SECRET,
+});
 
 mongoose.connect(
   (process.env.MONGODB_URL as string) ||
@@ -28,8 +38,9 @@ app.use(express.urlencoded({ extended: true }));
 const PORT = process.env.PORT || 8002;
 
 // Connecting routers to the express server
-app.use("/api/users", usersRouter);
-app.use("/api/auth", authRouter);
+app.use("/api/users", usersRoute);
+app.use("/api/auth", authRoute);
+app.use("/api/my-hotels", hotelRoute);
 
 app.use(express.static(path.join(__dirname, "../../frontend/dist")));
 

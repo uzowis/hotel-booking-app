@@ -13,17 +13,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_validator_1 = require("express-validator");
-const mongo_1 = __importDefault(require("../models/users/mongo"));
+const users_1 = __importDefault(require("../models/users"));
 const express_1 = __importDefault(require("express"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const auth_1 = __importDefault(require("../middleware/auth"));
-const usersRouter = express_1.default.Router();
-usersRouter.get("/me", auth_1.default, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const usersRoute = express_1.default.Router();
+usersRoute.get("/me", auth_1.default, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     // Extract the user id from the req object
     const userId = req.userId;
     try {
         // fetch user from db using userId
-        const user = yield mongo_1.default.findOne({ _id: userId }, "-password");
+        const user = yield users_1.default.findOne({ _id: userId }, "-password");
         return res.status(200).json(user);
     }
     catch (error) {
@@ -32,9 +32,9 @@ usersRouter.get("/me", auth_1.default, (req, res) => __awaiter(void 0, void 0, v
     }
 }));
 // Get all registered Users
-usersRouter.get("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+usersRoute.get("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const user = yield mongo_1.default.find({}, "-password");
+        const user = yield users_1.default.find({}, "-password");
         res.status(200).json(user);
     }
     catch (error) {
@@ -45,7 +45,7 @@ usersRouter.get("/", (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 }));
 // Register new User
-usersRouter.post("/register", [
+usersRoute.post("/register", [
     // Validate User input
     (0, express_validator_1.check)("firstName", "First name is required").isString(),
     (0, express_validator_1.check)("lastName", "Lastname is required").isString(),
@@ -65,12 +65,12 @@ usersRouter.post("/register", [
     }
     try {
         // check if user already exists
-        const email = yield mongo_1.default.findOne({ email: req.body.email });
+        const email = yield users_1.default.findOne({ email: req.body.email });
         if (email) {
             return res.status(400).json({ message: "User already exists" });
         }
         // Instantiate a User and save new user
-        const user = new mongo_1.default(req.body);
+        const user = new users_1.default(req.body);
         yield user.save();
         //Generate user token
         const token = jsonwebtoken_1.default.sign({ user_id: user.id }, process.env.JWT_SECRET_KEY, { expiresIn: "1d" });
@@ -87,4 +87,4 @@ usersRouter.post("/register", [
         res.status(500).json({ message: "Something went wrong" });
     }
 }));
-exports.default = usersRouter;
+exports.default = usersRoute;
