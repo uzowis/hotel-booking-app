@@ -16,43 +16,41 @@ const upload = multer({
     fileSize: 5 * 1024 * 1024, // 5MB
   },
 });
+const validateData = [
+  body("name").notEmpty().withMessage("Hotel name is required"),
+  body("city").notEmpty().withMessage("City is required"),
+  body("country").notEmpty().withMessage("Country is required"),
+  body("description").notEmpty().withMessage("Description is required"),
+  body("pricePerNight")
+    .notEmpty()
+    .isNumeric()
+    .withMessage("Price Per Night is required and must be a number"),
+  body("starRating")
+    .notEmpty()
+    .isNumeric()
+    .withMessage("Star Rating is required"),
+  body("type").notEmpty().withMessage("Type is required"),
+  body("facilities")
+    .notEmpty()
+    .isArray()
+    .withMessage("Facilities is required"),
+  body("adultCount")
+    .notEmpty()
+    .isNumeric()
+    .withMessage("Adult count is required"),
+  body("childCount")
+    .notEmpty()
+    .isNumeric()
+    .withMessage("Child count is required"),
+];
 
 hotelRoute.post(
   "/",
   verifyToken,
   upload.array("imageFiles", 6),
-  [
-    body("name").notEmpty().withMessage("Hotel name is required"),
-    body("city").notEmpty().withMessage("City is required"),
-    body("country").notEmpty().withMessage("Country is required"),
-    body("description").notEmpty().withMessage("Description is required"),
-    body("pricePerNight")
-      .notEmpty()
-      .isNumeric()
-      .withMessage("Price Per Night is required and must be a number"),
-    body("starRating")
-      .notEmpty()
-      .isNumeric()
-      .withMessage("Star Rating is required"),
-    body("type").notEmpty().withMessage("Type is required"),
-    body("facilities")
-      .notEmpty()
-      .isArray()
-      .withMessage("Facilities is required"),
-    body("adultCount")
-      .notEmpty()
-      .isNumeric()
-      .withMessage("Adult count is required"),
-    body("childCount")
-      .notEmpty()
-      .isNumeric()
-      .withMessage("Child count is required"),
-  ],
+  validateData,
   async (req: Request, res: Response) => {
     try {
-      console.log(req.body);
-      console.log(JSON.stringify(req.body));
-      //console.log(req.files);
       // check for validation errors
       const error = validationResult(req);
       if (!error.isEmpty()) {
@@ -82,6 +80,76 @@ hotelRoute.post(
     // return json response to user.
   }
 );
+
+hotelRoute.get("/", verifyToken, async (req: Request, res: Response) => {
+  try {
+    const hotels = await Hotel.find({ userId: req.userId });
+    res.json(hotels);
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("something went wrong");
+  }
+});
+
+hotelRoute.get(
+  "/:hotelId",
+  verifyToken,
+  async (req: Request, res: Response) => {
+    try {
+      // get a hotel by hotelId
+      const hotel = await Hotel.findOne({
+        userId: req.userId,
+        _id: req.params.hotelId,
+      });
+      res.json(hotel).status(200);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ message: "something went wrong" });
+    }
+  }
+);
+
+hotelRoute.put(
+  "/:hotelId",
+  verifyToken,
+  upload.array("imageFiles"),
+  async (req: Request, res: Response) => {
+    // check for validation errors
+    // const errors = validationResult(req);
+    // if (!errors.isEmpty())
+    //   return res.status(401).json({ message: errors.array() });
+
+    try {
+      // get hotel by hotelId and update details.
+      const hotelUpdate: HotelType = req.body;
+      hotelUpdate.lastUpdated = new Date();
+
+      const hotel = await Hotel.findOneAndUpdate(
+        {
+          userId: req.userId,
+          _id: req.params.hotelId,
+        },
+        hotelUpdate,
+        { new: true }
+      );
+
+      if (!hotel)
+        return res.status(404).json({ message: "Hotel not Found!" });
+
+      const files = req.files as Express.Multer.File[];
+      const updatedImageUrls = await uploadImages(files);
+
+      hotel.imageUrls = [...updatedImageUrls, ...(hotel?.imageUrls || [])];
+
+      await hotel?.save();
+      return res.status(200).json(hotel);
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ message: "something went wrong!" });
+    }
+  }
+);
+
 // Upload images to Cloudinary
 async function uploadImages(imageFiles: Express.Multer.File[]) {
   const uploadPromises = imageFiles.map(async (image) => {
@@ -92,7 +160,6 @@ async function uploadImages(imageFiles: Express.Multer.File[]) {
     return res.url;
   });
 
-  
   const imageUrls = await Promise.all(uploadPromises);
   return imageUrls;
 }

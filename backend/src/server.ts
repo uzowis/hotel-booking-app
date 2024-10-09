@@ -37,12 +37,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 const PORT = process.env.PORT || 8002;
 
+app.use(express.static(path.join(__dirname, "../../frontend/dist")));
+
 // Connecting routers to the express server
 app.use("/api/users", usersRoute);
 app.use("/api/auth", authRoute);
-app.use("/api/my-hotels", hotelRoute)
-
-app.use(express.static(path.join(__dirname, "../../frontend/dist")));
+app.use("/api/my-hotels", hotelRoute);
 
 app.get("*", (req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, "../../frontend/dist/index.html"));
