@@ -19,7 +19,7 @@ dotenv_1.default.config();
 cloudinary_1.v2.config({
     cloud_name: process.env.CLOUDINARY_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUD_API_SECRET,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 mongoose_1.default.connect(process.env.MONGODB_URL ||
     "mongodb://localhost:27017/hotel-booking");

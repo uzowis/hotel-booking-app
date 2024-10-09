@@ -27,48 +27,42 @@ const upload = (0, multer_1.default)({
         fileSize: 5 * 1024 * 1024, // 5MB
     },
 });
-hotelRoute.post("/", auth_1.default, [
-    (0, express_validator_1.body)("name")
-        .isString()
-        .notEmpty()
-        .withMessage("Hotel name is required"),
-    (0, express_validator_1.body)("city").isString().notEmpty().withMessage("City is required"),
-    (0, express_validator_1.body)("country")
-        .isString()
-        .notEmpty()
-        .withMessage("Country is required"),
-    (0, express_validator_1.body)("description")
-        .isString()
-        .notEmpty()
-        .withMessage("Description is required"),
+hotelRoute.post("/", auth_1.default, upload.array("imageFiles", 6), [
+    (0, express_validator_1.body)("name").notEmpty().withMessage("Hotel name is required"),
+    (0, express_validator_1.body)("city").notEmpty().withMessage("City is required"),
+    (0, express_validator_1.body)("country").notEmpty().withMessage("Country is required"),
+    (0, express_validator_1.body)("description").notEmpty().withMessage("Description is required"),
     (0, express_validator_1.body)("pricePerNight")
-        .isNumeric()
         .notEmpty()
+        .isNumeric()
         .withMessage("Price Per Night is required and must be a number"),
     (0, express_validator_1.body)("starRating")
+        .notEmpty()
         .isNumeric()
-        .notEmpty()
-        .withMessage("City is required"),
-    (0, express_validator_1.body)("type").isString().notEmpty().withMessage("Type is required"),
+        .withMessage("Star Rating is required"),
+    (0, express_validator_1.body)("type").notEmpty().withMessage("Type is required"),
     (0, express_validator_1.body)("facilities")
-        .isArray()
-        .isString()
         .notEmpty()
+        .isArray()
         .withMessage("Facilities is required"),
     (0, express_validator_1.body)("adultCount")
-        .isNumeric()
         .notEmpty()
+        .isNumeric()
         .withMessage("Adult count is required"),
     (0, express_validator_1.body)("childCount")
-        .isNumeric()
         .notEmpty()
+        .isNumeric()
         .withMessage("Child count is required"),
-], upload.array("imageFiles", 6), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+], (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        console.log(req.body);
+        console.log(JSON.stringify(req.body));
+        //console.log(req.files);
         // check for validation errors
         const error = (0, express_validator_1.validationResult)(req);
-        if (!error.isEmpty())
+        if (!error.isEmpty()) {
             return res.status(400).json({ message: error.array() });
+        }
         const imageFiles = req.files;
         const newHotel = req.body;
         const imageUrls = yield uploadImages(imageFiles);

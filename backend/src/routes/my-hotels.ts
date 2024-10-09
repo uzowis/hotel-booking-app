@@ -20,50 +20,44 @@ const upload = multer({
 hotelRoute.post(
   "/",
   verifyToken,
+  upload.array("imageFiles", 6),
   [
-    body("name")
-      .isString()
-      .notEmpty()
-      .withMessage("Hotel name is required"),
-    body("city").isString().notEmpty().withMessage("City is required"),
-    body("country")
-      .isString()
-      .notEmpty()
-      .withMessage("Country is required"),
-    body("description")
-      .isString()
-      .notEmpty()
-      .withMessage("Description is required"),
+    body("name").notEmpty().withMessage("Hotel name is required"),
+    body("city").notEmpty().withMessage("City is required"),
+    body("country").notEmpty().withMessage("Country is required"),
+    body("description").notEmpty().withMessage("Description is required"),
     body("pricePerNight")
-      .isNumeric()
       .notEmpty()
+      .isNumeric()
       .withMessage("Price Per Night is required and must be a number"),
     body("starRating")
+      .notEmpty()
       .isNumeric()
-      .notEmpty()
-      .withMessage("City is required"),
-    body("type").isString().notEmpty().withMessage("Type is required"),
+      .withMessage("Star Rating is required"),
+    body("type").notEmpty().withMessage("Type is required"),
     body("facilities")
-      .isArray()
-      .isString()
       .notEmpty()
+      .isArray()
       .withMessage("Facilities is required"),
     body("adultCount")
-      .isNumeric()
       .notEmpty()
+      .isNumeric()
       .withMessage("Adult count is required"),
     body("childCount")
-      .isNumeric()
       .notEmpty()
+      .isNumeric()
       .withMessage("Child count is required"),
   ],
-  upload.array("imageFiles", 6),
   async (req: Request, res: Response) => {
     try {
+      console.log(req.body);
+      console.log(JSON.stringify(req.body));
+      //console.log(req.files);
       // check for validation errors
       const error = validationResult(req);
-      if (!error.isEmpty())
+      if (!error.isEmpty()) {
         return res.status(400).json({ message: error.array() });
+      }
 
       const imageFiles = req.files as Express.Multer.File[];
       const newHotel: HotelType = req.body;
@@ -98,6 +92,7 @@ async function uploadImages(imageFiles: Express.Multer.File[]) {
     return res.url;
   });
 
+  
   const imageUrls = await Promise.all(uploadPromises);
   return imageUrls;
 }
