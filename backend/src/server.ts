@@ -7,7 +7,8 @@ import path from "path";
 import authRoute from "./routes/auth";
 import usersRoute from "./routes/users";
 import { v2 as cloudinary } from "cloudinary";
-import hotelRoute from "./routes/my-hotels";
+import myHotelRoute from "./routes/my-hotels";
+import hotelRoute from "./routes/hotels";
 
 // DotEnv Configuration
 dotenv.config();
@@ -42,7 +43,8 @@ app.use(express.static(path.join(__dirname, "../../frontend/dist")));
 // Connecting routers to the express server
 app.use("/api/users", usersRoute);
 app.use("/api/auth", authRoute);
-app.use("/api/my-hotels", hotelRoute);
+app.use("/api/my-hotels", myHotelRoute);
+app.use("/api/hotels", hotelRoute);
 
 app.get("*", (req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, "../../frontend/dist/index.html"));

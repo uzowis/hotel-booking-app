@@ -5,6 +5,7 @@ import {
   HotelType,
   PaymentIntentResponse,
   UserType,
+  SearchParams,
 } from "../../mern-booking-app/backend/src/shared/types";
 import { BookingFormData } from "./forms/BookingForm/BookingForm";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
@@ -131,19 +132,7 @@ export const updateMyHotelById = async (hotelFormData: FormData) => {
   return response.json();
 };
 
-export type SearchParams = {
-  destination?: string;
-  checkIn?: string;
-  checkOut?: string;
-  adultCount?: string;
-  childCount?: string;
-  page?: string;
-  facilities?: string[];
-  types?: string[];
-  stars?: string[];
-  maxPrice?: string;
-  sortOption?: string;
-};
+
 
 export const searchHotels = async (
   searchParams: SearchParams

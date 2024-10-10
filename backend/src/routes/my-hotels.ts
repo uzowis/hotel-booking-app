@@ -6,7 +6,7 @@ import { HotelType } from "../shared/types";
 import { v2 } from "cloudinary";
 import verifyToken from "../middleware/auth";
 
-const hotelRoute = express.Router();
+const myHotelRoute = express.Router();
 
 // initiate the multer instance that would be used to handle file upload
 const storage = multer.memoryStorage();
@@ -44,7 +44,7 @@ const validateData = [
     .withMessage("Child count is required"),
 ];
 
-hotelRoute.post(
+myHotelRoute.post(
   "/",
   verifyToken,
   upload.array("imageFiles", 6),
@@ -81,7 +81,7 @@ hotelRoute.post(
   }
 );
 
-hotelRoute.get("/", verifyToken, async (req: Request, res: Response) => {
+myHotelRoute.get("/", verifyToken, async (req: Request, res: Response) => {
   try {
     const hotels = await Hotel.find({ userId: req.userId });
     res.json(hotels);
@@ -91,7 +91,7 @@ hotelRoute.get("/", verifyToken, async (req: Request, res: Response) => {
   }
 });
 
-hotelRoute.get(
+myHotelRoute.get(
   "/:hotelId",
   verifyToken,
   async (req: Request, res: Response) => {
@@ -109,7 +109,7 @@ hotelRoute.get(
   }
 );
 
-hotelRoute.put(
+myHotelRoute.put(
   "/:hotelId",
   verifyToken,
   upload.array("imageFiles"),
@@ -164,4 +164,4 @@ async function uploadImages(imageFiles: Express.Multer.File[]) {
   return imageUrls;
 }
 
-export default hotelRoute;
+export default myHotelRoute;
