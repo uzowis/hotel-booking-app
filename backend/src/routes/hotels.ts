@@ -2,6 +2,13 @@ import express, { Request, Response } from "express";
 import verifyToken from "../middleware/auth";
 import Hotel from "../models/hotels";
 import { HotelSearchResponse } from "../shared/types";
+import { param, validationResult } from "express-validator";
+import Stripe from "stripe";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const stripe = new Stripe(process.env.STRIPE_API_KEY as string);
 
 const hotelRoute = express.Router();
 
@@ -13,12 +20,11 @@ hotelRoute.get("/", verifyToken, async (req: Request, res: Response) => {
   return res.status(200).json(hotels);
 });
 
-
 hotelRoute.get("/search", async (req: Request, res: Response) => {
   // create the constructSearchQuery function
   try {
     // declare the query property and assign the constructSearchQuery to it
-    const query: any =  constructSearchQuery(req.query);
+    const query: any = constructSearchQuery(req.query);
 
     // create sortOptions object
     let sortOptions = {};
@@ -124,24 +130,59 @@ function constructSearchQuery(queryParams: any) {
   }
 
   return constructedQuery;
-};
+}
 
-hotelRoute.get("/:hotelId", async (req: Request, res: Response) => {
-  try {
-    const hotel = await Hotel.findOne({ _id: req.params.hotelId });
-    res.status(200).json(hotel);
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Error fetching hotel" });
+hotelRoute.get(
+  "/:hotelId",
+  [param("hotelId").notEmpty().withMessage("Enter a valid hotelId")],
+  async (req: Request, res: Response) => {
+    const error = validationResult(req);
+    if (!error.isEmpty())
+      return res.status(400).json({ message: error.array() });
+    try {
+      const hotel = await Hotel.findOne({ _id: req.params.hotelId });
+      res.status(200).json(hotel);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ message: "Error fetching hotel" });
+    }
   }
-});
+);
 
 hotelRoute.get(
   "/:hotelId/booking/payment-intent",
   verifyToken,
-  async (req: Request, res: Response) => {}
+  async (req: Request, res: Response) => {
+    // extract numberOfNights booked from req body
+    const {numberOfNights} = req.body;
+    const hotelId = req.params.hotelId;
+
+    // check if hotel to be booked exists
+    const hotel = await Hotel.findById(hotelId);
+    if(!hotel) return res.status(404).json({message : "Hotel not found!"});
+
+    const totalCost = numberOfNights * hotel.pricePerNight;
+
+    const paymentIntent = await stripe.paymentIntents.create({
+        amount : totalCost * 100,
+        currency : "gbp",
+        metadata : {
+            hotelId : hotelId,
+            userId: req.userId,
+        }
+    });
+
+    if(!paymentIntent.client_secret) return res.status(500).json({message : "Error fetching paymentIntent"});
+
+
+    const response = {
+        paymentIntentId : paymentIntent.id,
+        clientSecret: paymentIntent.client_secret,
+        totalCost,
+    };
+
+    res.json(response);
+  }
 );
-
-
 
 export default hotelRoute;
