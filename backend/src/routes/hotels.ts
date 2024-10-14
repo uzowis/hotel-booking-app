@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import verifyToken from "../middleware/auth";
 import Hotel from "../models/hotels";
-import { HotelSearchResponse } from "../shared/types";
+import { BookingType, HotelSearchResponse } from "../shared/types";
 import { param, validationResult } from "express-validator";
 import Stripe from "stripe";
 import dotenv from "dotenv";
@@ -12,7 +12,7 @@ const stripe = new Stripe(process.env.STRIPE_API_KEY as string);
 
 const hotelRoute = express.Router();
 
-hotelRoute.get("/", verifyToken, async (req: Request, res: Response) => {
+hotelRoute.get("/", async (req: Request, res: Response) => {
   const hotels = await Hotel.find({});
   if (!hotels)
     return res.status(404).json({ message: "No Hotels found!" });
@@ -149,39 +149,98 @@ hotelRoute.get(
   }
 );
 
-hotelRoute.get(
-  "/:hotelId/booking/payment-intent",
+hotelRoute.post(
+  "/:hotelId/bookings/payment-intent",
   verifyToken,
   async (req: Request, res: Response) => {
     // extract numberOfNights booked from req body
-    const {numberOfNights} = req.body;
+    const { numberOfNights } = req.body;
     const hotelId = req.params.hotelId;
 
     // check if hotel to be booked exists
-    const hotel = await Hotel.findById(hotelId);
-    if(!hotel) return res.status(404).json({message : "Hotel not found!"});
+    const hotel = await Hotel.findOne({ _id: hotelId });
+    if (!hotel)
+      return res.status(404).json({ message: "Hotel not found!" });
 
     const totalCost = numberOfNights * hotel.pricePerNight;
 
     const paymentIntent = await stripe.paymentIntents.create({
-        amount : totalCost * 100,
-        currency : "gbp",
-        metadata : {
-            hotelId : hotelId,
-            userId: req.userId,
-        }
+      amount: totalCost * 100,
+      currency: "gbp",
+      metadata: {
+        hotelId: hotelId,
+        userId: req.userId,
+      },
     });
 
-    if(!paymentIntent.client_secret) return res.status(500).json({message : "Error fetching paymentIntent"});
-
+    if (!paymentIntent.client_secret)
+      return res
+        .status(500)
+        .json({ message: "Error fetching paymentIntent" });
 
     const response = {
-        paymentIntentId : paymentIntent.id,
-        clientSecret: paymentIntent.client_secret,
-        totalCost,
+      paymentIntentId: paymentIntent.id,
+      clientSecret: paymentIntent.client_secret,
+      totalCost,
     };
 
+    console.log(response);
     res.json(response);
+  }
+);
+
+hotelRoute.post(
+  "/:hotelId/bookings",
+  verifyToken,
+  async (req: Request, res: Response) => {
+    try {
+      // retreive and confirm the paymentIntentId is valid
+      const paymentIntent = await stripe.paymentIntents.retrieve(
+        req.body.paymentIntentId
+      );
+      if (!paymentIntent)
+        return res
+          .status(400)
+          .json({ message: "Payment Intent not found" });
+
+      // check if the paymentIntentId is meant for the user/hotel
+      if (
+        paymentIntent.metadata.hotelId !== req.params.hotelId ||
+        paymentIntent.metadata.userId !== req.userId
+      )
+        return res
+          .status(400)
+          .json({ message: "payment intent mismatch" });
+
+      // check if the paymentIntent status is succeeded
+      if (paymentIntent.status !== "succeeded")
+        return res.status(400).json({
+          message:
+            "Payment intent not succeeded. Status: " +
+            paymentIntent.status,
+        });
+
+      // prepare the new booking data
+      const newBooking: BookingType = {
+        ...req.body,
+        userId: req.userId,
+      };
+
+      // find the hotel and update with the booking with the new booking data
+      const hotel = await Hotel.findOneAndUpdate(
+        { _id: req.params.hotelId },
+        { $push: { bookings: newBooking } }
+      );
+      if (!hotel)
+        return res.status(400).json({ message: "Hotel not found" });
+
+      // send back response
+      await hotel.save();
+      return res.status(201).send();
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ message: "something went wrong!" });
+    }
   }
 );
 
