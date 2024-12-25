@@ -18,7 +18,7 @@ const express_1 = __importDefault(require("express"));
 const multer_1 = __importDefault(require("multer"));
 const cloudinary_1 = require("cloudinary");
 const auth_1 = __importDefault(require("../middleware/auth"));
-const hotelRoute = express_1.default.Router();
+const myHotelRoute = express_1.default.Router();
 // initiate the multer instance that would be used to handle file upload
 const storage = multer_1.default.memoryStorage();
 const upload = (0, multer_1.default)({
@@ -27,7 +27,7 @@ const upload = (0, multer_1.default)({
         fileSize: 5 * 1024 * 1024, // 5MB
     },
 });
-hotelRoute.post("/", auth_1.default, upload.array("imageFiles", 6), [
+const validateData = [
     (0, express_validator_1.body)("name").notEmpty().withMessage("Hotel name is required"),
     (0, express_validator_1.body)("city").notEmpty().withMessage("City is required"),
     (0, express_validator_1.body)("country").notEmpty().withMessage("Country is required"),
@@ -53,11 +53,9 @@ hotelRoute.post("/", auth_1.default, upload.array("imageFiles", 6), [
         .notEmpty()
         .isNumeric()
         .withMessage("Child count is required"),
-], (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+];
+myHotelRoute.post("/", auth_1.default, upload.array("imageFiles", 6), validateData, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        console.log(req.body);
-        console.log(JSON.stringify(req.body));
-        //console.log(req.files);
         // check for validation errors
         const error = (0, express_validator_1.validationResult)(req);
         if (!error.isEmpty()) {
@@ -82,6 +80,56 @@ hotelRoute.post("/", auth_1.default, upload.array("imageFiles", 6), [
     // save the data to Hotel model.
     // return json response to user.
 }));
+myHotelRoute.get("/", auth_1.default, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const hotels = yield hotels_1.default.find({ userId: req.userId });
+        res.json(hotels);
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).send("something went wrong");
+    }
+}));
+myHotelRoute.get("/:hotelId", auth_1.default, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // get a hotel by hotelId
+        const hotel = yield hotels_1.default.findOne({
+            userId: req.userId,
+            _id: req.params.hotelId,
+        });
+        res.json(hotel).status(200);
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "something went wrong" });
+    }
+}));
+myHotelRoute.put("/:hotelId", auth_1.default, upload.array("imageFiles"), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    // check for validation errors
+    // const errors = validationResult(req);
+    // if (!errors.isEmpty())
+    //   return res.status(401).json({ message: errors.array() });
+    try {
+        // get hotel by hotelId and update details.
+        const hotelUpdate = req.body;
+        hotelUpdate.lastUpdated = new Date();
+        const hotel = yield hotels_1.default.findOneAndUpdate({
+            userId: req.userId,
+            _id: req.params.hotelId,
+        }, hotelUpdate, { new: true });
+        if (!hotel)
+            return res.status(404).json({ message: "Hotel not Found!" });
+        const files = req.files;
+        const updatedImageUrls = yield uploadImages(files);
+        hotel.imageUrls = [...updatedImageUrls, ...((hotel === null || hotel === void 0 ? void 0 : hotel.imageUrls) || [])];
+        yield (hotel === null || hotel === void 0 ? void 0 : hotel.save());
+        return res.status(200).json(hotel);
+    }
+    catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "something went wrong!" });
+    }
+}));
 // Upload images to Cloudinary
 function uploadImages(imageFiles) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -95,4 +143,4 @@ function uploadImages(imageFiles) {
         return imageUrls;
     });
 }
-exports.default = hotelRoute;
+exports.default = myHotelRoute;

@@ -71,7 +71,7 @@ usersRoute.post(
 
       // Instantiate a User and save new user
       console.log(req.body);
-      const user = new User(JSON.stringify(req.body));
+      const user = new User(req.body);
       await user.save();
 
       //Generate user token

@@ -13,6 +13,8 @@ const auth_1 = __importDefault(require("./routes/auth"));
 const users_1 = __importDefault(require("./routes/users"));
 const cloudinary_1 = require("cloudinary");
 const my_hotels_1 = __importDefault(require("./routes/my-hotels"));
+const hotels_1 = __importDefault(require("./routes/hotels"));
+const my_bookings_1 = __importDefault(require("./routes/my-bookings"));
 // DotEnv Configuration
 dotenv_1.default.config();
 // Cloudinary configuration
@@ -32,11 +34,13 @@ app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 const PORT = process.env.PORT || 8002;
+app.use(express_1.default.static(path_1.default.join(__dirname, "../../frontend/dist")));
 // Connecting routers to the express server
 app.use("/api/users", users_1.default);
 app.use("/api/auth", auth_1.default);
 app.use("/api/my-hotels", my_hotels_1.default);
-app.use(express_1.default.static(path_1.default.join(__dirname, "../../frontend/dist")));
+app.use("/api/hotels", hotels_1.default);
+app.use("/api/my-bookings", my_bookings_1.default);
 app.get("*", (req, res) => {
     res.sendFile(path_1.default.join(__dirname, "../../frontend/dist/index.html"));
 });

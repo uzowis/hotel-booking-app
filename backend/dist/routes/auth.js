@@ -67,7 +67,7 @@ authRoute.post("/logout", (req, res) => {
     res.cookie("auth_token", "", {
         expires: new Date(0)
     });
-    res.send().status(200);
+    res.send("Logout was successful!").status(200);
 });
 exports.default = authRoute;
 // The user registers
