@@ -71,7 +71,7 @@ usersRoute.post("/register", [
         }
         // Instantiate a User and save new user
         console.log(req.body);
-        const user = new users_1.default(JSON.stringify(req.body));
+        const user = new users_1.default(req.body);
         yield user.save();
         //Generate user token
         const token = jsonwebtoken_1.default.sign({ user_id: user.id }, process.env.JWT_SECRET_KEY, { expiresIn: "1d" });
